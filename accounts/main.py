@@ -1,13 +1,12 @@
-from fastapi import FastAPI ,Path, Query,Depends,HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from accounts.database import engine,SessionLocal
-import accounts.schemas as schemas,accounts.models as models
 from typing import List
-# from pydantic import BaseModel, Field
-# from typing import Annotated, Literal
-
+import accounts.schemas as schemas,accounts.models as models
+from accounts.database import engine,SessionLocal
 models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
+
 
 def get_db():
     db = SessionLocal()
@@ -17,31 +16,65 @@ def get_db():
         db.close()
 
 
-@app.post("/register/", response_model=schemas.User)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    new_user = models.User(**user.dict())
-    db.add(new_user)
+@app.post("/users/", response_model=schemas.UserResponse)
+def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user =models.User(username=user.username, email=user.email)
+    db.add(db_user)
     db.commit()
-    db.refresh(new_user)
-    return new_user
-
-
-
-@app.get("/users/{user_id}", response_model=schemas.UserBase)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    db.refresh(db_user)
     return db_user
 
+@app.get("/users/", response_model=List[schemas.UserResponse])
+def get_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
 
-@app.get("/users", response_model=List[schemas.UserBase])  
-def read_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()  
-    return users
+
+
+@app.post("/contents/", response_model=schemas.ContentResponse)
+def create_content(content: schemas.ContentCreate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == content.created_by).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db_content = models.Content(title=content.title, description=content.description, created_by=content.created_by)
+    db.add(db_content)
+    db.commit()
+    db.refresh(db_content)
+    return db_content
+
+@app.get("/contents/", response_model=List[schemas.ContentResponse])
+def get_contents(db: Session = Depends(get_db)):
+    return db.query(models.Content).all()
+
+@app.get("/contents/{content_id}", response_model=schemas.ContentResponse)
+def get_content(content_id: int, db: Session = Depends(get_db)):
+    content = db.query(models.Content).filter(models.Content.id == content_id).first()
+    if content is None:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return content
+
+@app.put("/contents/{content_id}", response_model=schemas.ContentResponse)
+def update_content(content_id: int, content_data: schemas.ContentUpdate, db: Session = Depends(get_db)):
+    content = db.query(models.Content).filter(models.Content.id == content_id).first()
+    if content is None:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    content.title = content_data.title
+    content.description = content_data.description
+    db.commit()
+    db.refresh(content)
+    return content
+
+@app.delete("/contents/{content_id}")
+def delete_content(content_id: int, db: Session = Depends(get_db)):
+    content = db.query(models.Content).filter(models.Content.id == content_id).first()
+    if content is None:
+        raise HTTPException(status_code=404, detail="Content not found")
+    db.delete(content)
+    db.commit()
+    return {"detail": "Content deleted successfully"}
+
+
 
 
 

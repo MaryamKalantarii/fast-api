@@ -1,15 +1,38 @@
 from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
 
-class UserBase(BaseModel):
-    email: str
+
+class UserCreate(BaseModel):
     username: str
+    email: str
 
-
-class UserCreate(UserBase):
-    password: str
-
-class User(BaseModel):
+class UserResponse(BaseModel):
     id: int
+    username: str
+    email: str
 
     class Config:
         orm_mode = True
+
+
+class ContentCreate(BaseModel):
+    title: str
+    description: str
+    created_by: int  
+
+class ContentUpdate(BaseModel):
+    title: str
+    description: str
+
+class ContentResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    created_at: datetime
+    created_by: int
+
+    class Config:
+        orm_mode = True
+
+
