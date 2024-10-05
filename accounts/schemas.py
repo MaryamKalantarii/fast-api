@@ -13,7 +13,7 @@ class UserResponse(BaseModel):
     email: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ContentCreate(BaseModel):
@@ -33,6 +33,6 @@ class ContentResponse(BaseModel):
     created_by: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 

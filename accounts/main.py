@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import accounts.schemas as schemas,accounts.models as models
 from accounts.database import engine,SessionLocal
-models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
