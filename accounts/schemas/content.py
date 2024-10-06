@@ -1,19 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
 
-
-class UserCreate(BaseModel):
-    username: str
-    email: str
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-
-    class Config:
-        from_attributes = True
 
 
 class ContentCreate(BaseModel):
@@ -34,5 +21,3 @@ class ContentResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
