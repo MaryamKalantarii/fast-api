@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException,APIRouter
 from sqlalchemy.orm import Session
 from typing import List
-from accounts.schemas import content as schemas
-from accounts.models import content as models
-from accounts.models.users import User 
+from schemas import content as schemas
+from models import content as models
+from models.users import User 
 
 from dependencies import get_db
 
