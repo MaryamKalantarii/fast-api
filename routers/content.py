@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from schemas import content as schemas
 from models import content as models
-from models.users import User 
+from models.users import UserModel 
 
 from dependencies import get_db
 
@@ -13,7 +13,7 @@ router = APIRouter()
 @router.post("/contents/", response_model=schemas.ContentResponse)
 def create_content(content: schemas.ContentCreate, db: Session = Depends(get_db)):
     # استفاده از User که از accounts.models.users ایمپورت شده است
-    user = db.query(User).filter(User.id == content.created_by).first()  
+    user = db.query(UserModel).filter(UserModel.id == content.created_by).first()  
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     

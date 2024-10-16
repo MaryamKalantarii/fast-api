@@ -14,4 +14,4 @@ class Content(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(Integer, ForeignKey("users.id"))
 
-    created_by_user = relationship("User", back_populates="contents")
+    created_by_user = relationship("UserModel", back_populates="contents")
