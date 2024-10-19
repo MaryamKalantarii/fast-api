@@ -1,7 +1,6 @@
 from database import Base
 from sqlalchemy import Column, Integer, String,ForeignKey,DateTime
 from sqlalchemy.orm import relationship
-from fastapi.encoders import jsonable_encoder
 import datetime
 
 class UserModel(Base):

@@ -1,18 +1,23 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional
-from fastapi import Path
+
 # مدل پایه برای مقاله (مشترک بین ورودی و خروجی)
 class ArticleBase(BaseModel):
-    title: str = Path(min_length=3, max_length=50)
+    title: str
     description: Optional[str] = None
-
-# مدل مخصوص ایجاد مقاله
-class ArticleCreate(ArticleBase):
-    pass
 
 # مدل مخصوص خروجی داده‌های مقاله (شامل id و تصویر)
 class Article(ArticleBase):
     id: int
     image: Optional[str] = None
 
-   
+class ImageUpload(BaseModel):
+    filename: str
+    content_type: str
+
+    @validator('content_type')
+    def validate_image_format(cls, v):
+        allowed_formats = ["image/jpeg", "image/png"]
+        if v not in allowed_formats:
+            raise ValueError("فقط فرمت‌های png و jpeg مجاز هستند")
+        return v
