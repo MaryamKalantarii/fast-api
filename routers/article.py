@@ -77,15 +77,21 @@ async def create_article(
     if not os.path.exists(images_directory):
         os.makedirs(images_directory)
 
-    # مدیریت فایل تصویر
+     # مدیریت فایل تصویر
     image_filename = None
     if image:
-        file_location = f"{images_directory}/{image.filename}"
+        # اعتبارسنجی تصویر با استفاده از schema
+        try:
+            image_data = schemas.ImageUpload(
+                filename=image.filename,
+                content_type=image.content_type
+            )
+        except ValueError:
+            # اگر فرمت تصویر نامعتبر باشد، یک خطای HTTP برمی‌گردانیم
+            raise HTTPException(status_code=400, detail="فقط فرمت‌های png و jpeg مجاز هستند")
+
+        file_location = f"{images_directory}/{image_data.filename}"
         
-        # ذخیره فایل تصویر
-        with open(file_location, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-        image_filename = f"{BASE_URL}{image.filename}"
 
     # ایجاد شی دیتابیس
     new_article = models.Article(
