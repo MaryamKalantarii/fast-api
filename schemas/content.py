@@ -1,50 +1,38 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, Boolean, DateTime
-from sqlalchemy.orm import relationship
+from pydantic import BaseModel
+from typing import Optional, List
 from datetime import datetime
-from database import Base  # فرض بر این است که Base از تنظیمات SQLAlchemy شما آمده است
 
-# جدول میانی برای رابطه‌ی Many-to-Many
-posts_category_association = Table(
-    'postmodel_category',
-    Base.metadata,
-    Column('post_id', Integer, ForeignKey('posts.id')),
-    Column('category_id', Integer, ForeignKey('categories.id'))
-)
+# Schema برای ایجاد پست جدید
+class PostSchema(BaseModel):
+    title: str
+    content: str
+    is_published: bool
+    categories: Optional[List[int]]  # لیستی از شناسه‌های دسته‌بندی‌ها
 
-# مدل Category
-class Category(Base):
-    __tablename__ = 'categories'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, unique=True)
-    
-    # رابطه‌ی Many-to-Many با PostModel
-    posts = relationship(
-        "PostModel",
-        secondary=posts_category_association,
-        back_populates="categories"
-    )
+# Schema برای به‌روزرسانی پست
+class PostUpdateSchema(BaseModel):
+    title: Optional[str]
+    content: Optional[str] 
+    is_published: Optional[bool] 
+    categories: Optional[List[int]]   # لیستی از شناسه‌های دسته‌بندی‌ها
 
-# مدل PostModel
-class PostModel(Base):
-    __tablename__ = "posts"
+# Schema برای بازگرداندن اطلاعات پست
+class PostResponse(BaseModel):
+    id: Optional[int]
+    title: str
+    user: int
+    content: str
+    created_at: Optional[datetime] 
+    modified_at: Optional[datetime] 
+    categories: Optional[List[int]]  # لیستی از شناسه‌های دسته‌بندی‌ها
 
-    id = Column(Integer, primary_key=True, index=True)
-    user = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    title = Column(String)
-    content = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    modified_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
-    is_published = Column(Boolean, default=False)
+    class Config:
+        orm_mode = True
 
-    # رابطه‌ی Many-to-Many با Category
-    categories = relationship(
-        "Category",
-        secondary=posts_category_association,
-        back_populates="posts"
-    )
+# Schema برای ایجاد دسته‌بندی جدید
+class CategoryCreate(BaseModel):
+    name: str
 
-    # رابطه با UserModel
-    users = relationship("UserModel", back_populates="posts")
+# Schema برای به‌روزرسانی دسته‌بندی
+class CategoryUpdate(BaseModel):
+    name: Optional[str]

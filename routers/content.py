@@ -1,62 +1,45 @@
 from fastapi import Depends, HTTPException,APIRouter
 from sqlalchemy.orm import Session
-from typing import List
-from schemas import content as schemas
-from models import content as models
-from models.users import UserModel 
-
-from dependencies import get_db
-
+from schemas.content import *
+from models.content import *
 
 router = APIRouter()
 
-@router.post("/contents/", response_model=schemas.ContentResponse)
-def create_content(content: schemas.ContentCreate, db: Session = Depends(get_db)):
-    # استفاده از User که از accounts.models.users ایمپورت شده است
-    user = db.query(UserModel).filter(UserModel.id == content.created_by).first()  
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+@router.post("/categories/", response_model=CategoryCreate)
+def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
+    # بررسی یکتا بودن نام دسته‌بندی
+    existing_category = db.query(Category).filter(Category.name == category.name).first()
+    if existing_category:
+        raise HTTPException(status_code=400, detail="Category with this name already exists")
     
-    db_content = models.Content(title=content.title, description=content.description, created_by=content.created_by)
-    db.add(db_content)
+    # ایجاد دسته‌بندی جدید
+    new_category = Category(name=category.name)
+    db.add(new_category)
     db.commit()
-    db.refresh(db_content)
-    return db_content
+    db.refresh(new_category)
+    return new_category
 
-@router.get("/contents/", response_model=List[schemas.ContentResponse])
-def get_contents(db: Session = Depends(get_db)):
-    return db.query(models.Content).all()
 
-@router.get("/contents/{content_id}", response_model=schemas.ContentResponse)
-def get_content(content_id: int, db: Session = Depends(get_db)):
-    content = db.query(models.Content).filter(models.Content.id == content_id).first()
-    if content is None:
-        raise HTTPException(status_code=404, detail="Content not found")
-    return content
-
-@router.put("/contents/{content_id}", response_model=schemas.ContentResponse)
-def update_content(content_id: int, content_data: schemas.ContentUpdate, db: Session = Depends(get_db)):
-    content = db.query(models.Content).filter(models.Content.id == content_id).first()
-    if content is None:
-        raise HTTPException(status_code=404, detail="Content not found")
+@router.put("/categories/{category_id}", response_model=CategoryUpdate)
+def update_category(category_id: int, category: CategoryUpdate, db: Session = Depends(get_db)):
+    # پیدا کردن دسته‌بندی مورد نظر بر اساس ID
+    db_category = db.query(Category).filter(Category.id == category_id).first()
+    if not db_category:
+        raise HTTPException(status_code=404, detail="Category not found")
     
-    content.title = content_data.title
-    content.description = content_data.description
+    # بررسی یکتا بودن نام جدید (در صورتی که با نام فعلی دسته‌بندی متفاوت باشد)
+    if category.name and category.name != db_category.name:
+        existing_category = db.query(Category).filter(Category.name == category.name).first()
+        if existing_category:
+            raise HTTPException(status_code=400, detail="Category with this name already exists")
+
+    # به‌روزرسانی نام دسته‌بندی
+    if category.name:
+        db_category.name = category.name
+
     db.commit()
-    db.refresh(content)
-    return content
-
-@router.delete("/contents/{content_id}")
-def delete_content(content_id: int, db: Session = Depends(get_db)):
-    content = db.query(models.Content).filter(models.Content.id == content_id).first()
-    if content is None:
-        raise HTTPException(status_code=404, detail="Content not found")
-    db.delete(content)
-    db.commit()
-    return {"detail": "Content deleted successfully"}
-
-
-
+    db.refresh(db_category)
+    return db_category
 
 
 
