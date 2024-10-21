@@ -1,17 +1,7 @@
 from pydantic import BaseModel,EmailStr
 from typing import List,Optional
 
-# class UserCreate(BaseModel):
-#     username: str
-#     email: str
 
-# class UserResponse(BaseModel):
-#     id: int
-#     username: str
-#     email: str
-
-#     class Config:
-#         from_attributes = True
 
 class UserRegistrationSchema(BaseModel):
     email: EmailStr
@@ -47,6 +37,34 @@ class UserLoginSchema(BaseModel):
         json_schema_extra = {
             "example": {
                 "email": "maryam@gmail.com",
+                "password": "yourpassword",
+            }
+        }
+
+class ResponseUserLoginSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+    user_id: int
+    email: EmailStr
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "access_token": "accesstoken",
+                "refresh_token": "refreshtoken",
+                "email": "bigdeli.ali3@gmail.com",
+                "user_id": 1,
+            }
+        }
+
+class UserLoginSchema(BaseModel):
+    email: EmailStr
+    password: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "bigdeli.ali3@gmail.com",
                 "password": "yourpassword",
             }
         }

@@ -6,20 +6,11 @@ from schemas import users as schemas
 from models import users as models
 from dependencies import get_db
 import bcrypt
+from accounts.auth import auth_handler
 
 router = APIRouter()
 
-# @router.post("/users/", response_model=schemas.UserResponse)
-# def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
-#     db_user =models.User(username=user.username, email=user.email)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return db_user
 
-# @router.get("/users/", response_model=List[schemas.UserResponse])
-# def get_users(db: Session = Depends(get_db)):
-#     return db.query(models.User).all()
 
 @router.post("/register/",response_model=schemas.ResponseUserRegistrationSchema,
             status_code=status.HTTP_201_CREATED,
@@ -62,7 +53,38 @@ def account_register(
     )
 
 
+@router.post(
+    "/login/",
+    response_model=schemas.ResponseUserLoginSchema,
+    status_code=status.HTTP_200_OK,
+)
+def account_login(
+    request: schemas.UserLoginSchema, db: Session = Depends(get_db)
+):
+    user_obj = (
+        db.query(models.UserModel)
+        .filter(models.UserModel.email == request.email)
+        .first()
+    )
 
+    if not user_obj:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    encoded_password = request.password.encode("utf-8")
+    if not bcrypt.checkpw(encoded_password, user_obj.password.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    access_token = auth_handler.encode_access_jwt(user_obj.id)
+    refresh_token = auth_handler.encode_refresh_jwt(user_obj.id)
+    return JSONResponse(
+        {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user_id": user_obj.id,
+            "email": request.email,
+        },
+        status_code=status.HTTP_200_OK,
+    )
 
 
 
