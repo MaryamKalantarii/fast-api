@@ -1,7 +1,13 @@
-from fastapi import Depends, HTTPException,APIRouter
+from fastapi import Depends, HTTPException,APIRouter,status
 from sqlalchemy.orm import Session
 from schemas.content import *
 from models.content import *
+from accounts.auth.auth_bearer import JWTBearer
+from dependencies import get_db
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from schemas import content as schemas
+from models import content as models
 
 router = APIRouter()
 
@@ -44,8 +50,51 @@ def update_category(category_id: int, category: CategoryUpdate, db: Session = De
 
 
 
+@router.post("/user/post/")
+async def post_create(
+    request: schemas.PostSchema,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(JWTBearer()),
+):
+    post_obj = models.PostModel(
+        title=request.title,
+        content=request.content,
+        is_published=request.is_published,
+        user=user_id,
+    )
+    if request.categories:
+        # جستجوی دسته‌بندی‌ها در دیتابیس و اضافه کردن آن‌ها به پست
+        categories = db.query(models.Category).filter(models.Category.id.in_(request.categories)).all()
+        post_obj.categories = categories
+    db.add(post_obj)
+    db.commit()
+    db.refresh(post_obj)
+    return JSONResponse(
+        jsonable_encoder(schemas.AuthorPostResponse.from_orm(post_obj)),
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
+@router.put("/user/post/{id}/")
+async def post_update(
+    id: int,
+    request: schemas.PostSchema,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(JWTBearer()),
+):
+    post_obj = db.query(models.PostModel).filter(
+        models.PostModel.id == id, models.PostModel.user == user_id
+    )
+    if not post_obj.first():
+        raise HTTPException(status_code=404, detail="post not found")
+    post_obj.update(request.dict())
+    db.commit()
+    return JSONResponse(
+        content=jsonable_encoder(
+            schemas.AuthorPostResponse.from_orm(post_obj.first())
+        ),
+        status_code=status.HTTP_202_ACCEPTED,
+    )
 
 
 
