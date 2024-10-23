@@ -14,7 +14,7 @@ class PostUpdateSchema(BaseModel):
     title: Optional[str]
     content: Optional[str] 
     is_published: Optional[bool] 
-    categories: Optional[List[int]]   # لیستی از شناسه‌های دسته‌بندی‌ها
+    categories: Optional[list[int]] = None   # لیستی از شناسه‌های دسته‌بندی‌ها
 
 # Schema برای بازگرداندن اطلاعات پست
 class PostResponse(BaseModel):
