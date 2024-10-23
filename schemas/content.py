@@ -36,3 +36,18 @@ class CategoryCreate(BaseModel):
 # Schema برای به‌روزرسانی دسته‌بندی
 class CategoryUpdate(BaseModel):
     name: Optional[str]
+
+
+class AuthorPostResponse(BaseModel):
+    id: Optional[int]
+    title: str
+    user: int
+    content: str
+    created_at: Optional[datetime]
+    modified_at: Optional[datetime]
+    is_published: bool
+    
+
+    class Config:
+        orm_mode = True
+        from_attributes=True

@@ -56,23 +56,31 @@ async def post_create(
     db: Session = Depends(get_db),
     user_id: int = Depends(JWTBearer()),
 ):
+    # ایجاد پست جدید
     post_obj = models.PostModel(
         title=request.title,
         content=request.content,
         is_published=request.is_published,
         user=user_id,
     )
+
+    # اضافه کردن دسته‌بندی‌ها به پست
     if request.categories:
         # جستجوی دسته‌بندی‌ها در دیتابیس و اضافه کردن آن‌ها به پست
         categories = db.query(models.Category).filter(models.Category.id.in_(request.categories)).all()
         post_obj.categories = categories
+
+    # ذخیره کردن پست در دیتابیس
     db.add(post_obj)
     db.commit()
     db.refresh(post_obj)
+
+    # بازگشت پاسخ به کلاینت
     return JSONResponse(
         jsonable_encoder(schemas.AuthorPostResponse.from_orm(post_obj)),
         status_code=status.HTTP_201_CREATED,
     )
+
 
 
 @router.put("/user/post/{id}/")
